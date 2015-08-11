@@ -7,6 +7,7 @@ CFLAGS  += $(CFLAGS_GLIB)
 LDFLAGS += $(LDFLAGS_GLIB)
 
 OBJS = \
+  src/filelist.o \
   src/main.o
 
 .PHONY: clean

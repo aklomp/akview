@@ -1,5 +1,7 @@
 #include <glib.h>
 
+#include "filelist.h"
+
 static inline gboolean
 is_dir (gchar *const path)
 {
@@ -33,9 +35,21 @@ get_initial_dir (int argc, char *argv[])
 int
 main (int argc, char *argv[])
 {
-	gchar *dir = get_initial_dir(argc, argv);
+	GList *list;
+	gchar *dir;
+
+	// Get initial dir:
+	dir = get_initial_dir(argc, argv);
+
+	// Get file list for initial dir:
+	if ((list = filelist_create(dir)) == NULL) {
+		g_free(dir);
+		return 1;
+	}
+
+	// Free file list:
+	filelist_destroy(list);
 
 	g_free(dir);
-
 	return 0;
 }
