@@ -46,3 +46,10 @@ filelist_create (gchar *path)
 	// Return sorted contents:
 	return g_list_sort(list, (GCompareFunc) g_strcmp0);
 }
+
+// Find filename in list of files, or NULL
+GList *
+filelist_find (GList *list, gchar *file)
+{
+	return g_list_find_custom(list, file, (GCompareFunc) g_strcmp0);
+}

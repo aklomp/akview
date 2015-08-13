@@ -31,25 +31,62 @@ get_initial_dir (int argc, char *argv[])
 	return g_strdup(".");
 }
 
+// Return pointer to initial file in list to show
+static GList *
+get_initial_file (int argc, char *argv[], gchar *dir, GList *list)
+{
+	// At least one argument:
+	if (argc > 1) {
+		GList *file;
+		gchar *fullname;
+		gchar *basename;
+
+		// If the argument is a directory, return first file:
+		if (is_dir(argv[1]))
+			return list;
+
+		// Else get the basename and try to find it in the list:
+		basename = g_path_get_basename(argv[1]);
+		fullname = g_build_filename(dir, basename, NULL);
+		if ((file = filelist_find(list, fullname))) {
+			g_free(fullname);
+			g_free(basename);
+			return file;
+		}
+
+		g_free(fullname);
+		g_free(basename);
+	}
+
+	// Return the first file in the list:
+	return list;
+}
+
 // Entry point
 int
 main (int argc, char *argv[])
 {
-	GList *list;
+	GList *list, *file;
 	gchar *dir;
+	int ret = 0;
 
 	// Get initial dir:
 	dir = get_initial_dir(argc, argv);
 
 	// Get file list for initial dir:
 	if ((list = filelist_create(dir)) == NULL) {
-		g_free(dir);
-		return 1;
+		ret = 1;
+		goto out0;
 	}
 
-	// Free file list:
-	filelist_destroy(list);
+	// Get the initial file within the dir:
+	if (!(file = get_initial_file(argc, argv, dir, list))) {
+		ret = 1;
+		goto out1;
+	}
 
-	g_free(dir);
-	return 0;
+out1:	filelist_destroy(list);
+out0:	g_free(dir);
+
+	return ret;
 }
