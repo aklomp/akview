@@ -9,7 +9,8 @@ LDFLAGS += $(LDFLAGS_GDK)
 OBJS = \
   src/filedata.o \
   src/filelist.o \
-  src/main.o
+  src/main.o \
+  src/pixbuf.o
 
 .PHONY: clean
 
