@@ -76,6 +76,13 @@ main (int argc, char *argv[])
 		goto out1;
 	}
 
+	// Scan to next image:
+	if (!(file = filelist_scan_forward(&list, file))
+	 && !(file = filelist_scan_backward(&list, g_list_last(list)))) {
+		ret = 1;
+		goto out1;
+	}
+
 	// Initialize GUI layer:
 	gui_init(argc, argv);
 

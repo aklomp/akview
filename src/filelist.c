@@ -3,6 +3,67 @@
 #include <gdk/gdk.h>
 
 #include "filedata.h"
+#include "pixbuf.h"
+
+// Destroy one link
+static void
+link_destroy (GList **list, GList *link)
+{
+	filedata_destroy(link->data);
+	*list = g_list_delete_link(*list, link);
+}
+
+// Check if current link is viable, else delete
+static GList *
+filelist_scan_current (GList **list, GList *cur)
+{
+	struct filedata *fd = cur->data;
+
+	// Accept if this entry has a pixbuf:
+	if (fd->pixbuf)
+		return cur;
+
+	// Else, try to create a pixbuf for this entry:
+	if (pixbuf_create(fd))
+		return cur;
+
+	// Loading pixbuf failed:
+	return NULL;
+}
+
+// Scan forward for next viable image
+GList *
+filelist_scan_forward (GList **list, GList *cur)
+{
+	while (cur) {
+		GList *c, *next = cur->next;
+
+		if ((c = filelist_scan_current(list, cur)))
+			return c;
+
+		link_destroy(list, cur);
+		cur = next;
+	}
+
+	return cur;
+}
+
+// Scan backwards for next viable image
+GList *
+filelist_scan_backward (GList **list, GList *cur)
+{
+	while (cur) {
+		GList *c, *prev = cur->prev;
+
+		if ((c = filelist_scan_current(list, cur)))
+			return c;
+
+		link_destroy(list, cur);
+		cur = prev;
+	}
+
+	return cur;
+}
 
 // Free list of files
 void
@@ -12,8 +73,7 @@ filelist_destroy (GList *list)
 
 	for (l = list; l != NULL; l = next) {
 		next = l->next;
-		filedata_destroy(l->data);
-		list = g_list_delete_link(list, l);
+		link_destroy(&list, l);
 	}
 }
 
