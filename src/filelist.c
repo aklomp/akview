@@ -1,5 +1,8 @@
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <gdk/gdk.h>
+
+#include "filedata.h"
 
 // Free list of files
 void
@@ -9,7 +12,7 @@ filelist_destroy (GList *list)
 
 	for (l = list; l != NULL; l = next) {
 		next = l->next;
-		g_free(l->data);
+		filedata_destroy(l->data);
 		list = g_list_delete_link(list, l);
 	}
 }
@@ -34,7 +37,7 @@ filelist_create (gchar *path)
 	while ((name = g_dir_read_name(dir))) {
 		gchar *full = g_build_filename(path, name, NULL);
 		if (g_file_test(full, G_FILE_TEST_IS_REGULAR)) {
-			list = g_list_prepend(list, full);
+			list = g_list_prepend(list, filedata_create(full));
 			continue;
 		}
 		g_free(full);
@@ -44,12 +47,20 @@ filelist_create (gchar *path)
 	g_dir_close(dir);
 
 	// Return sorted contents:
-	return g_list_sort(list, (GCompareFunc) g_strcmp0);
+	return g_list_sort(list, filedata_compare);
 }
 
 // Find filename in list of files, or NULL
 GList *
-filelist_find (GList *list, gchar *file)
+filelist_find (GList *list, gchar *path)
 {
-	return g_list_find_custom(list, file, (GCompareFunc) g_strcmp0);
+	struct filedata *fd;
+	GList *file;
+
+	if ((fd = filedata_create(g_strdup(path))) == NULL)
+		return NULL;
+
+	file = g_list_find_custom(list, fd, filedata_compare);
+	filedata_destroy(fd);
+	return file;
 }

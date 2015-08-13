@@ -38,24 +38,14 @@ get_initial_file (int argc, char *argv[], gchar *dir, GList *list)
 	// At least one argument:
 	if (argc > 1) {
 		GList *file;
-		gchar *fullname;
-		gchar *basename;
 
 		// If the argument is a directory, return first file:
 		if (is_dir(argv[1]))
 			return list;
 
-		// Else get the basename and try to find it in the list:
-		basename = g_path_get_basename(argv[1]);
-		fullname = g_build_filename(dir, basename, NULL);
-		if ((file = filelist_find(list, fullname))) {
-			g_free(fullname);
-			g_free(basename);
+		// Else try to find the basename in the file list:
+		if ((file = filelist_find(list, argv[1])))
 			return file;
-		}
-
-		g_free(fullname);
-		g_free(basename);
 	}
 
 	// Return the first file in the list:
