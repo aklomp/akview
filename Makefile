@@ -1,14 +1,15 @@
 CFLAGS += -std=c99 -Werror -Wall -pedantic
 
-CFLAGS_GDK = `pkg-config --cflags gdk-2.0`
-LDFLAGS_GDK = `pkg-config --libs gdk-2.0`
+CFLAGS_GTK  = `pkg-config --cflags gtk+-3.0`
+LDFLAGS_GTK = `pkg-config --libs gtk+-3.0`
 
-CFLAGS  += $(CFLAGS_GDK)
-LDFLAGS += $(LDFLAGS_GDK)
+CFLAGS  += $(CFLAGS_GTK)
+LDFLAGS += $(LDFLAGS_GTK)
 
 OBJS = \
   src/filedata.o \
   src/filelist.o \
+  src/gui.o \
   src/main.o \
   src/pixbuf.o
 

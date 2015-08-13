@@ -1,6 +1,7 @@
 #include <glib.h>
 
 #include "filelist.h"
+#include "gui.h"
 
 static inline gboolean
 is_dir (gchar *const path)
@@ -74,6 +75,12 @@ main (int argc, char *argv[])
 		ret = 1;
 		goto out1;
 	}
+
+	// Initialize GUI layer:
+	gui_init(argc, argv);
+
+	// Start the GUI on this file:
+	gui_run(&list, file);
 
 out1:	filelist_destroy(list);
 out0:	g_free(dir);
