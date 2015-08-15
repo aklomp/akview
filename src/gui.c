@@ -121,6 +121,27 @@ on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
 	return FALSE;
 }
 
+// Mouse wheel was scrolled
+static gboolean
+on_scroll (GtkWidget* widget, GdkEventScroll *event, struct state *state)
+{
+	switch (event->direction)
+	{
+	case GDK_SCROLL_UP:
+		move_to_prev(state);
+		break;
+
+	case GDK_SCROLL_DOWN:
+		move_to_next(state);
+		break;
+
+	default:
+		break;
+	}
+
+	return FALSE;
+}
+
 // GUI entry point
 void
 gui_run (GList **list, GList *file)
@@ -135,9 +156,10 @@ gui_run (GList **list, GList *file)
 	gtk_container_add(GTK_CONTAINER(state.window), state.image);
 
 	// Connect signals:
-	gtk_widget_set_events(state.window, GDK_KEY_PRESS_MASK);
+	gtk_widget_set_events(state.window, GDK_KEY_PRESS_MASK | GDK_SCROLL_MASK);
 	g_signal_connect(state.window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(state.window, "key-press-event", G_CALLBACK(on_key_press), &state);
+	g_signal_connect(state.window, "scroll-event", G_CALLBACK(on_scroll), &state);
 
 	// Show window:
 	gtk_widget_show_all(state.window);
