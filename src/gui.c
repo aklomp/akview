@@ -4,42 +4,100 @@
 #include "filelist.h"
 #include "pixbuf.h"
 
-static GtkWidget *window;
-static GtkWidget *image;
+struct state {
+	GList **list;
+	GList *file;
+	GtkWidget *window;
+	GtkWidget *image;
+};
 
 // Load image into window
 static void
-gui_load (struct filedata *fd)
+gui_load (struct state *state)
 {
-	gtk_image_set_from_pixbuf(GTK_IMAGE(image), fd->pixbuf);
-	gtk_window_set_title(GTK_WINDOW(window), fd->path);
-	gtk_window_resize(GTK_WINDOW(window),
+	struct filedata *fd = state->file->data;
+
+	gtk_image_set_from_pixbuf(GTK_IMAGE(state->image), fd->pixbuf);
+	gtk_window_set_title(GTK_WINDOW(state->window), fd->path);
+	gtk_window_resize(GTK_WINDOW(state->window),
 		gdk_pixbuf_get_width(fd->pixbuf),
 		gdk_pixbuf_get_height(fd->pixbuf));
+}
+
+// Move pixbuf to previous picture
+static void
+move_to_prev (struct state *state)
+{
+	GList *file;
+
+	// Try to find previous file in list; if this fails, keep current:
+	if (!(file = filelist_scan_backward(state->list, state->file->prev)))
+		return;
+
+	// Else move to the new file:
+	state->file = file;
+	gui_load(state);
+}
+
+// Move pixbuf to next picture
+static void
+move_to_next (struct state *state)
+{
+	GList *file;
+
+	// Try to find next file in list; if this fails, keep current:
+	if (!(file = filelist_scan_forward(state->list, state->file->next)))
+		return;
+
+	// Else move to the new file:
+	state->file = file;
+	gui_load(state);
+}
+
+// Key was pressed
+static gboolean
+on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
+{
+	switch (event->keyval)
+	{
+	case GDK_KEY_Page_Up:
+		move_to_prev(state);
+		break;
+
+	case GDK_KEY_Page_Down:
+		move_to_next(state);
+		break;
+
+	default:
+		break;
+	}
+
+	return FALSE;
 }
 
 // GUI entry point
 void
 gui_run (GList **list, GList *file)
 {
+	struct state state = { list, file };
+
 	// Create new window:
-	window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	state.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
 	// Add GtkImage:
-	image = gtk_image_new();
-	GdkPixbuf *pixbuf = ((struct filedata *)file->data)->pixbuf;
-	gtk_image_set_from_pixbuf(GTK_IMAGE(image), pixbuf);
-
-	gtk_container_add(GTK_CONTAINER(window), image);
+	state.image = gtk_image_new();
+	gtk_container_add(GTK_CONTAINER(state.window), state.image);
 
 	// Connect signals:
-	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+	gtk_widget_set_events(state.window, GDK_KEY_PRESS_MASK);
+	g_signal_connect(state.window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+	g_signal_connect(state.window, "key-press-event", G_CALLBACK(on_key_press), &state);
 
 	// Show window:
-	gtk_widget_show_all(window);
+	gtk_widget_show_all(state.window);
 
 	// Load initial image:
-	gui_load(file->data);
+	gui_load(&state);
 
 	// Enter main loop:
 	gtk_main();
