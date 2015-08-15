@@ -8,7 +8,7 @@ struct state {
 	GList **list;
 	GList *file;
 	GtkWidget *window;
-	GtkWidget *image;
+	GtkWidget *darea;
 };
 
 // Load image into window
@@ -17,11 +17,11 @@ gui_load (struct state *state)
 {
 	struct filedata *fd = state->file->data;
 
-	gtk_image_set_from_pixbuf(GTK_IMAGE(state->image), fd->pixbuf);
 	gtk_window_set_title(GTK_WINDOW(state->window), fd->path);
 	gtk_window_resize(GTK_WINDOW(state->window),
 		gdk_pixbuf_get_width(fd->pixbuf),
 		gdk_pixbuf_get_height(fd->pixbuf));
+	gtk_widget_queue_draw(state->darea);
 }
 
 // Move pixbuf to previous picture
@@ -142,6 +142,23 @@ on_scroll (GtkWidget* widget, GdkEventScroll *event, struct state *state)
 	return FALSE;
 }
 
+// Redraw current image
+static gboolean
+on_draw (GtkWidget *widget, cairo_t *cr, struct state *state)
+{
+	struct filedata *fd = state->file->data;
+
+	// Dark background:
+	cairo_set_source_rgb(cr, 0.05, 0.05, 0.05);
+	cairo_paint(cr);
+
+	// Image:
+	gdk_cairo_set_source_pixbuf(cr, fd->pixbuf, 0, 0);
+	cairo_paint(cr);
+
+	return FALSE;
+}
+
 // GUI entry point
 void
 gui_run (GList **list, GList *file)
@@ -151,15 +168,16 @@ gui_run (GList **list, GList *file)
 	// Create new window:
 	state.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-	// Add GtkImage:
-	state.image = gtk_image_new();
-	gtk_container_add(GTK_CONTAINER(state.window), state.image);
+	// Add drawing area:
+	state.darea = gtk_drawing_area_new();
+	gtk_container_add(GTK_CONTAINER(state.window), state.darea);
 
 	// Connect signals:
 	gtk_widget_set_events(state.window, GDK_KEY_PRESS_MASK | GDK_SCROLL_MASK);
 	g_signal_connect(state.window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(state.window, "key-press-event", G_CALLBACK(on_key_press), &state);
 	g_signal_connect(state.window, "scroll-event", G_CALLBACK(on_scroll), &state);
+	g_signal_connect(state.darea, "draw", G_CALLBACK(on_draw), &state);
 
 	// Show window:
 	gtk_widget_show_all(state.window);
