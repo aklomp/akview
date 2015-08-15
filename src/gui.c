@@ -54,6 +54,44 @@ move_to_next (struct state *state)
 	gui_load(state);
 }
 
+// Move pixbuf to first picture
+static void
+move_to_first (struct state *state)
+{
+	GList *file;
+
+	// Try to find first file: if this fails, keep current:
+	if (!(file = filelist_scan_forward(state->list, g_list_first(*state->list))))
+		return;
+
+	// If this is the file we're already on, keep current:
+	if (file == state->file)
+		return;
+
+	// Else move to the new file:
+	state->file = file;
+	gui_load(state);
+}
+
+// Move pixbuf to last picture
+static void
+move_to_last (struct state *state)
+{
+	GList *file;
+
+	// Try to find last file; if this fails, keep current:
+	if (!(file = filelist_scan_backward(state->list, g_list_last(*state->list))))
+		return;
+
+	// If this is the file we're already on, keep current:
+	if (file == state->file)
+		return;
+
+	// Else move to the new file:
+	state->file = file;
+	gui_load(state);
+}
+
 // Key was pressed
 static gboolean
 on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
@@ -66,6 +104,14 @@ on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
 
 	case GDK_KEY_Page_Down:
 		move_to_next(state);
+		break;
+
+	case GDK_KEY_Home:
+		move_to_first(state);
+		break;
+
+	case GDK_KEY_End:
+		move_to_last(state);
 		break;
 
 	default:
