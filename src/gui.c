@@ -165,6 +165,14 @@ on_draw (GtkWidget *widget, cairo_t *cr, struct state *state)
 	return FALSE;
 }
 
+// Window was moved or resized
+static gboolean
+on_configure (GtkWidget *widget, GdkEventConfigure *event, struct state *state)
+{
+	geometry_window_resized(&state->geometry, event->width, event->height);
+	return FALSE;
+}
+
 // GUI entry point
 void
 gui_run (GList **list, GList *file)
@@ -183,6 +191,7 @@ gui_run (GList **list, GList *file)
 	g_signal_connect(state.window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
 	g_signal_connect(state.window, "key-press-event", G_CALLBACK(on_key_press), &state);
 	g_signal_connect(state.window, "scroll-event", G_CALLBACK(on_scroll), &state);
+	g_signal_connect(state.window, "configure-event", G_CALLBACK(on_configure), &state);
 	g_signal_connect(state.darea, "draw", G_CALLBACK(on_draw), &state);
 
 	// Show window:

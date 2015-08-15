@@ -8,3 +8,4 @@ struct geometry {
 };
 
 void geometry_reset (struct geometry *g, GdkPixbuf *pixbuf);
+void geometry_window_resized (struct geometry *g, int new_wd, int new_ht);
