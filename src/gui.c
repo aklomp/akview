@@ -14,6 +14,24 @@ struct state {
 	gboolean panning;
 };
 
+// Set drag cursor
+static void
+drag_cursor_set (struct state *state)
+{
+	GdkWindow *window = gtk_widget_get_window(state->window);
+	GdkDisplay *display = gdk_window_get_display(window);
+	GdkCursor *cursor = gdk_cursor_new_for_display(display, GDK_HAND2);
+
+	gdk_window_set_cursor(window, cursor);
+	g_object_unref(cursor);
+}
+
+static void
+drag_cursor_remove (struct state *state)
+{
+	gdk_window_set_cursor(gtk_widget_get_window(state->window), NULL);
+}
+
 // Load image into window
 static void
 gui_load (struct state *state)
@@ -182,6 +200,7 @@ on_button_press (GtkWidget *widget, GdkEventButton *event, struct state *state)
 		if (state->panning == FALSE) {
 			geometry_pan_start(&state->geometry, event->x, event->y);
 			state->panning = TRUE;
+			drag_cursor_set(state);
 		}
 
 	return FALSE;
@@ -191,8 +210,10 @@ on_button_press (GtkWidget *widget, GdkEventButton *event, struct state *state)
 static gboolean
 on_button_release (GtkWidget *widget, GdkEventButton *event, struct state *state)
 {
-	if (event->button == 1)
+	if (event->button == 1) {
 		state->panning = FALSE;
+		drag_cursor_remove(state);
+	}
 
 	return FALSE;
 }
