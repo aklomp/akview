@@ -3,6 +3,7 @@
 #include "filedata.h"
 #include "filelist.h"
 #include "geometry.h"
+#include "monitor.h"
 #include "pixbuf.h"
 
 struct state {
@@ -119,6 +120,55 @@ gui_load (struct state *state)
 
 	// Zoom in/out by stored factor:
 	processed_create(state);
+}
+
+// This link will be deleted shortly; move on:
+void
+gui_notify_deleted (GList *file, struct state *state)
+{
+	GList *next;
+
+	// If we're not displaying this file, never mind:
+	if (file != state->file)
+		return;
+
+	// Try to find next file in list; if this fails, go in reverse:
+	if (!(next = filelist_scan_forward(state->list, file->next)))
+		if (!(next = filelist_scan_backward(state->list, file->prev))) {
+			gtk_main_quit();
+			return;
+		}
+
+	// Move to the new file:
+	state->file = next;
+	gui_load(state);
+}
+
+// This link has been changed; reload:
+void
+gui_notify_changed (GList *file, struct state *state)
+{
+	GList *next;
+	struct filedata *fd = state->file->data;
+
+	// If we're not displaying this file, never mind:
+	if (file != state->file)
+		return;
+
+	// Destroy file's pixbuf to force a reload:
+	g_object_unref(fd->pixbuf);
+	fd->pixbuf = NULL;
+
+	// Try to find next file in list; if this fails, go in reverse:
+	if (!(next = filelist_scan_forward(state->list, file)))
+		if (!(next = filelist_scan_backward(state->list, file->prev))) {
+			gtk_main_quit();
+			return;
+		}
+
+	// Reload the file:
+	state->file = next;
+	gui_load(state);
 }
 
 // Move pixbuf to previous picture
@@ -394,7 +444,7 @@ on_motion_notify (GtkWidget *widget, GdkEventMotion *event, struct state *state)
 
 // GUI entry point
 void
-gui_run (GList **list, GList *file)
+gui_run (GList **list, GList *file, const gchar *dir)
 {
 	struct {
 		const gchar *signal;
@@ -439,8 +489,14 @@ gui_run (GList **list, GList *file)
 	// Load initial image:
 	gui_load(&state);
 
+	// Create file monitor:
+	monitor_create(state.list, dir, &state);
+
 	// Enter main loop:
 	gtk_main();
+
+	// Destroy file monitor:
+	monitor_destroy();
 
 	// Free processed pixbuf:
 	processed_reset(&state);

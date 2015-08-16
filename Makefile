@@ -12,6 +12,7 @@ OBJS = \
   src/geometry.o \
   src/gui.o \
   src/main.o \
+  src/monitor.o \
   src/pixbuf.o
 
 .PHONY: clean

@@ -124,3 +124,20 @@ filelist_find (GList *list, gchar *path)
 	filedata_destroy(fd);
 	return file;
 }
+
+// Remove filename and attributes from list of files
+void
+filelist_unlink (GList **list, GList *file)
+{
+	link_destroy(list, file);
+}
+
+// Add file with given name to list of files
+void
+filelist_link (GList **list, gchar *fullname)
+{
+	*list = g_list_insert_sorted(
+		*list,
+		filedata_create(fullname),
+		filedata_compare);
+}

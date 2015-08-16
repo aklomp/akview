@@ -87,7 +87,7 @@ main (int argc, char *argv[])
 	gui_init(argc, argv);
 
 	// Start the GUI on this file:
-	gui_run(&list, file);
+	gui_run(&list, file, dir);
 
 out1:	filelist_destroy(list);
 out0:	g_free(dir);
