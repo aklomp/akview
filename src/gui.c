@@ -1,3 +1,5 @@
+#include <glib.h>
+#include <glib/gstdio.h>
 #include <gtk/gtk.h>
 
 #include "filedata.h"
@@ -309,6 +311,38 @@ rotate_cw (struct state *state)
 	processed_create(state);
 }
 
+// Delete current image
+static void
+delete (struct state *state)
+{
+	struct filedata *fd = state->file->data;
+
+	GtkWidget *dialog = gtk_message_dialog_new(
+		GTK_WINDOW(state->window),
+		GTK_DIALOG_DESTROY_WITH_PARENT,
+		GTK_MESSAGE_QUESTION,
+		GTK_BUTTONS_YES_NO,
+		"Delete %s?",
+		fd->basename);
+
+	// Run dialog, remove the file if user confirms:
+	if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_YES) {
+
+		// Attempt to remove file:
+		if (g_unlink(fd->path) == 0) {
+			GList *file = state->file;
+
+			// Notify GUI that file will go away:
+			gui_notify_deleted(file, state);
+
+			// Delete file from list:
+			filelist_unlink(state->list, file);
+		}
+	}
+
+	gtk_widget_destroy(dialog);
+}
+
 // Key was pressed
 static gboolean
 on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
@@ -345,6 +379,10 @@ on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
 
 	case GDK_KEY_9:
 		rotate_cw(state);
+		break;
+
+	case GDK_KEY_Delete:
+		delete(state);
 		break;
 
 	default:
