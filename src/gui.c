@@ -11,8 +11,28 @@ struct state {
 	GtkWidget *window;
 	GtkWidget *darea;
 	struct geometry geometry;
+	GdkPixbuf *processed;
 	gboolean panning;
 };
+
+// Zoom factors, powers of two in steps of 0.5:
+static const gfloat zoom_table[] = {
+	0.125000f,
+	0.176777f,
+	0.250000f,
+	0.353553f,
+	0.500000f,
+	0.707107f,
+	1.000000f,
+	1.414214f,
+	2.000000f,
+	2.828427f,
+	4.000000f,
+	5.656854f,
+	8.000000f,
+};
+
+static size_t zoom_table_size = sizeof(zoom_table) / sizeof(zoom_table[0]);
 
 // Set drag cursor
 static void
@@ -32,6 +52,39 @@ drag_cursor_remove (struct state *state)
 	gdk_window_set_cursor(gtk_widget_get_window(state->window), NULL);
 }
 
+// Zoom native pixbuf by factor given in file data
+static void
+processed_create (struct state *state)
+{
+	struct filedata *fd = state->file->data;
+
+	// Recalculate layout:
+	geometry_zoom(&state->geometry, fd->zoom_factor);
+
+	// Reset the processed image:
+	if (state->processed) {
+		g_object_unref(state->processed);
+		state->processed = NULL;
+	}
+
+	// For non-unity zoom factors, resize pixbuf:
+	if (fd->zoom_factor != 1.0f) {
+		state->processed = gdk_pixbuf_scale_simple(
+			fd->pixbuf,
+			state->geometry.pixbuf_wd,
+			state->geometry.pixbuf_ht,
+			GDK_INTERP_NEAREST);
+	}
+
+	// Resize main window to the new geometry:
+	gtk_window_resize(GTK_WINDOW(state->window),
+		state->geometry.window_wd,
+		state->geometry.window_ht);
+
+	// Request a redraw:
+	gtk_widget_queue_draw(state->darea);
+}
+
 // Load image into window
 static void
 gui_load (struct state *state)
@@ -40,10 +93,9 @@ gui_load (struct state *state)
 
 	geometry_reset(&state->geometry, fd->pixbuf);
 	gtk_window_set_title(GTK_WINDOW(state->window), fd->path);
-	gtk_window_resize(GTK_WINDOW(state->window),
-		state->geometry.window_wd,
-		state->geometry.window_ht);
-	gtk_widget_queue_draw(state->darea);
+
+	// Zoom in/out by stored factor:
+	processed_create(state);
 }
 
 // Move pixbuf to previous picture
@@ -114,6 +166,46 @@ move_to_last (struct state *state)
 	gui_load(state);
 }
 
+// Zoom pixbuf in
+static void
+zoom_in (struct state *state)
+{
+	struct filedata *fd = state->file->data;
+
+	// Set zoom factor:
+	if (fd->zoom_factor == zoom_table[zoom_table_size - 1])
+		return;
+
+	for (size_t i = 0; i < zoom_table_size - 1; i++)
+		if (fd->zoom_factor == zoom_table[i]) {
+			fd->zoom_factor = zoom_table[i + 1];
+			break;
+		}
+
+	// Create processed image;
+	processed_create(state);
+}
+
+// Zoom pixbuf out
+static void
+zoom_out (struct state *state)
+{
+	struct filedata *fd = state->file->data;
+
+	// Set zoom factor:
+	if (fd->zoom_factor == zoom_table[0])
+		return;
+
+	for (size_t i = 1; i < zoom_table_size; i++)
+		if (fd->zoom_factor == zoom_table[i]) {
+			fd->zoom_factor = zoom_table[i - 1];
+			break;
+		}
+
+	// Create processed image:
+	processed_create(state);
+}
+
 // Key was pressed
 static gboolean
 on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
@@ -134,6 +226,14 @@ on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
 
 	case GDK_KEY_End:
 		move_to_last(state);
+		break;
+
+	case GDK_KEY_plus:
+		zoom_in(state);
+		break;
+
+	case GDK_KEY_minus:
+		zoom_out(state);
 		break;
 
 	default:
@@ -174,8 +274,9 @@ on_draw (GtkWidget *widget, cairo_t *cr, struct state *state)
 	cairo_set_source_rgb(cr, 0.05, 0.05, 0.05);
 	cairo_paint(cr);
 
-	// Image:
-	gdk_cairo_set_source_pixbuf(cr, fd->pixbuf,
+	// Use original pixbuf or processed one if available:
+	gdk_cairo_set_source_pixbuf(cr,
+		(state->processed) ? state->processed : fd->pixbuf,
 		state->geometry.offset_x,
 		state->geometry.offset_y);
 

@@ -3,6 +3,7 @@ struct filedata {
 	gchar *basename;
 	gchar *collate_key;
 	GdkPixbuf *pixbuf;
+	gfloat zoom_factor;
 };
 
 struct filedata *filedata_create (gchar *path);
