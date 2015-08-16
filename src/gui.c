@@ -2,6 +2,7 @@
 
 #include "filedata.h"
 #include "filelist.h"
+#include "geometry.h"
 #include "pixbuf.h"
 
 struct state {
@@ -9,6 +10,7 @@ struct state {
 	GList *file;
 	GtkWidget *window;
 	GtkWidget *darea;
+	struct geometry geometry;
 };
 
 // Load image into window
@@ -17,10 +19,11 @@ gui_load (struct state *state)
 {
 	struct filedata *fd = state->file->data;
 
+	geometry_reset(&state->geometry, fd->pixbuf);
 	gtk_window_set_title(GTK_WINDOW(state->window), fd->path);
 	gtk_window_resize(GTK_WINDOW(state->window),
-		gdk_pixbuf_get_width(fd->pixbuf),
-		gdk_pixbuf_get_height(fd->pixbuf));
+		state->geometry.window_wd,
+		state->geometry.window_ht);
 	gtk_widget_queue_draw(state->darea);
 }
 
@@ -153,7 +156,10 @@ on_draw (GtkWidget *widget, cairo_t *cr, struct state *state)
 	cairo_paint(cr);
 
 	// Image:
-	gdk_cairo_set_source_pixbuf(cr, fd->pixbuf, 0, 0);
+	gdk_cairo_set_source_pixbuf(cr, fd->pixbuf,
+		state->geometry.offset_x,
+		state->geometry.offset_y);
+
 	cairo_paint(cr);
 
 	return FALSE;

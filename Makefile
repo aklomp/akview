@@ -9,6 +9,7 @@ LDFLAGS += $(LDFLAGS_GTK)
 OBJS = \
   src/filedata.o \
   src/filelist.o \
+  src/geometry.o \
   src/gui.o \
   src/main.o \
   src/pixbuf.o
