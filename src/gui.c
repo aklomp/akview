@@ -11,6 +11,7 @@ struct state {
 	GtkWidget *window;
 	GtkWidget *darea;
 	struct geometry geometry;
+	gboolean panning;
 };
 
 // Load image into window
@@ -173,10 +174,60 @@ on_configure (GtkWidget *widget, GdkEventConfigure *event, struct state *state)
 	return FALSE;
 }
 
+// Mouse button was pressed
+static gboolean
+on_button_press (GtkWidget *widget, GdkEventButton *event, struct state *state)
+{
+	if (event->button == 1)
+		if (state->panning == FALSE) {
+			geometry_pan_start(&state->geometry, event->x, event->y);
+			state->panning = TRUE;
+		}
+
+	return FALSE;
+}
+
+// Mouse button was released
+static gboolean
+on_button_release (GtkWidget *widget, GdkEventButton *event, struct state *state)
+{
+	if (event->button == 1)
+		state->panning = FALSE;
+
+	return FALSE;
+}
+
+// Mouse pointer moved in window
+static gboolean
+on_motion_notify (GtkWidget *widget, GdkEventMotion *event, struct state *state)
+{
+	if (state->panning == TRUE) {
+		geometry_pan_update(&state->geometry, event->x, event->y);
+		gtk_widget_queue_draw(state->darea);
+	}
+
+	return FALSE;
+}
+
 // GUI entry point
 void
 gui_run (GList **list, GList *file)
 {
+	struct {
+		const gchar *signal;
+		GCallback handler;
+		GdkEventMask mask;
+	}
+	signals[] = {
+		{ "destroy",			G_CALLBACK(gtk_main_quit),	0			},
+		{ "key-press-event",		G_CALLBACK(on_key_press),	GDK_KEY_PRESS_MASK	},
+		{ "scroll-event",		G_CALLBACK(on_scroll),		GDK_SCROLL_MASK		},
+		{ "configure-event",		G_CALLBACK(on_configure),	0			},
+		{ "button-press-event",		G_CALLBACK(on_button_press),	GDK_BUTTON_PRESS_MASK	},
+		{ "button-release-event",	G_CALLBACK(on_button_release),	GDK_BUTTON_RELEASE_MASK	},
+		{ "motion-notify-event",	G_CALLBACK(on_motion_notify),	GDK_BUTTON1_MOTION_MASK	},
+	};
+
 	struct state state = { list, file };
 
 	// Create new window:
@@ -186,12 +237,17 @@ gui_run (GList **list, GList *file)
 	state.darea = gtk_drawing_area_new();
 	gtk_container_add(GTK_CONTAINER(state.window), state.darea);
 
-	// Connect signals:
-	gtk_widget_set_events(state.window, GDK_KEY_PRESS_MASK | GDK_SCROLL_MASK);
-	g_signal_connect(state.window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
-	g_signal_connect(state.window, "key-press-event", G_CALLBACK(on_key_press), &state);
-	g_signal_connect(state.window, "scroll-event", G_CALLBACK(on_scroll), &state);
-	g_signal_connect(state.window, "configure-event", G_CALLBACK(on_configure), &state);
+	// Connect window signals:
+	for (size_t i = 0; i < sizeof(signals) / sizeof(signals[0]); i++) {
+		gtk_widget_add_events(state.window, signals[i].mask);
+		g_signal_connect(
+			state.window,
+			signals[i].signal,
+			signals[i].handler,
+			&state);
+	}
+
+	// Connect drawing area signals:
 	g_signal_connect(state.darea, "draw", G_CALLBACK(on_draw), &state);
 
 	// Show window:
