@@ -4,6 +4,7 @@ struct filedata {
 	gchar *collate_key;
 	GdkPixbuf *pixbuf;
 	gfloat zoom_factor;
+	gint rotation;
 };
 
 struct filedata *filedata_create (gchar *path);

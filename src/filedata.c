@@ -16,6 +16,7 @@ filedata_create (gchar *path)
 	fd->collate_key = g_utf8_collate_key_for_filename(fd->basename, -1);
 	fd->pixbuf = NULL;
 	fd->zoom_factor = 1.0f;
+	fd->rotation = 0;
 
 	return fd;
 }

@@ -30,6 +30,8 @@ geometry_reset (struct geometry *g, GdkPixbuf *pixbuf)
 	g->window_ht = g->pixbuf_ht;
 	g->offset_x = 0;
 	g->offset_y = 0;
+	g->zoom_factor = 1.0f;
+	g->rotation = 0;
 }
 
 void
@@ -75,15 +77,35 @@ geometry_pan_update (struct geometry *g, int x, int y)
 	g->pan_start_y = y - g->offset_y;
 }
 
-void
-geometry_zoom (struct geometry *g, gfloat zoom_factor)
+#define is_rotated \
+	(g->rotation == 90 || g->rotation == 270)
+
+static void
+find_processed_size (struct geometry *g)
 {
-	g->pixbuf_wd = g->pixbuf_native_wd * zoom_factor;
-	g->pixbuf_ht = g->pixbuf_native_ht * zoom_factor;
+	g->pixbuf_wd = (is_rotated) ? g->pixbuf_native_ht : g->pixbuf_native_wd;
+	g->pixbuf_ht = (is_rotated) ? g->pixbuf_native_wd : g->pixbuf_native_ht;
+
+	g->pixbuf_wd *= g->zoom_factor;
+	g->pixbuf_ht *= g->zoom_factor;
 
 	g->window_wd = g->pixbuf_wd;
 	g->window_ht = g->pixbuf_ht;
 
 	g->offset_x = 0;
 	g->offset_y = 0;
+}
+
+void
+geometry_zoom (struct geometry *g, gfloat zoom_factor)
+{
+	g->zoom_factor = zoom_factor;
+	find_processed_size(g);
+}
+
+void
+geometry_rotate (struct geometry *g, int rotation)
+{
+	g->rotation = rotation;
+	find_processed_size(g);
 }

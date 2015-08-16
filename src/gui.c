@@ -52,6 +52,17 @@ drag_cursor_remove (struct state *state)
 	gdk_window_set_cursor(gtk_widget_get_window(state->window), NULL);
 }
 
+// Reset processed pixbuf
+static void
+processed_reset (struct state *state)
+{
+	if (!state->processed)
+		return;
+
+	g_object_unref(state->processed);
+	state->processed = NULL;
+}
+
 // Zoom native pixbuf by factor given in file data
 static void
 processed_create (struct state *state)
@@ -59,21 +70,33 @@ processed_create (struct state *state)
 	struct filedata *fd = state->file->data;
 
 	// Recalculate layout:
-	geometry_zoom(&state->geometry, fd->zoom_factor);
+	geometry_rotate(&state->geometry, fd->rotation);
 
 	// Reset the processed image:
-	if (state->processed) {
-		g_object_unref(state->processed);
-		state->processed = NULL;
-	}
+	processed_reset(state);
+
+	// Account for rotation:
+	if (fd->rotation != 0)
+		state->processed = gdk_pixbuf_rotate_simple(fd->pixbuf, fd->rotation);
 
 	// For non-unity zoom factors, resize pixbuf:
 	if (fd->zoom_factor != 1.0f) {
-		state->processed = gdk_pixbuf_scale_simple(
-			fd->pixbuf,
+
+		// Recalculate layout:
+		geometry_zoom(&state->geometry, fd->zoom_factor);
+
+		// If image is zoomed, create a new pixbuf:
+		GdkPixbuf *zoomed = gdk_pixbuf_scale_simple(
+			(state->processed) ? state->processed : fd->pixbuf,
 			state->geometry.pixbuf_wd,
 			state->geometry.pixbuf_ht,
 			GDK_INTERP_NEAREST);
+
+		// Reset the processed image:
+		processed_reset(state);
+
+		// Put zoomed pixbuf in its place:
+		state->processed = zoomed;
 	}
 
 	// Resize main window to the new geometry:
@@ -206,6 +229,36 @@ zoom_out (struct state *state)
 	processed_create(state);
 }
 
+// Rotate counterclockwise
+static void
+rotate_ccw (struct state *state)
+{
+	struct filedata *fd = state->file->data;
+
+	fd->rotation += 90;
+
+	if (fd->rotation > 270)
+		fd->rotation = 0;
+
+	// Create processed image:
+	processed_create(state);
+}
+
+// Rotate clockwise
+static void
+rotate_cw (struct state *state)
+{
+	struct filedata *fd = state->file->data;
+
+	fd->rotation -= 90;
+
+	if (fd->rotation < 0)
+		fd->rotation = 270;
+
+	// Create processed image:
+	processed_create(state);
+}
+
 // Key was pressed
 static gboolean
 on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
@@ -234,6 +287,14 @@ on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
 
 	case GDK_KEY_minus:
 		zoom_out(state);
+		break;
+
+	case GDK_KEY_7:
+		rotate_ccw(state);
+		break;
+
+	case GDK_KEY_9:
+		rotate_cw(state);
 		break;
 
 	default:
@@ -380,6 +441,9 @@ gui_run (GList **list, GList *file)
 
 	// Enter main loop:
 	gtk_main();
+
+	// Free processed pixbuf:
+	processed_reset(&state);
 }
 
 // Initialize GTK
