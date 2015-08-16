@@ -33,12 +33,21 @@ geometry_reset (struct geometry *g, GdkPixbuf *pixbuf)
 void
 geometry_window_resized (struct geometry *g, int new_wd, int new_ht)
 {
+	// Get image location currently in the window center:
+	int center_x = g->window_wd / 2 - g->offset_x;
+	int center_y = g->window_ht / 2 - g->offset_y;
+
+	// Store new window dimensions:
 	g->window_wd = new_wd;
 	g->window_ht = new_ht;
 
-	// Center current pixbuf inside window:
-	g->offset_x = (g->window_wd - g->pixbuf_wd) / 2;
-	g->offset_y = (g->window_ht - g->pixbuf_ht) / 2;
+	// Keep the old image center point:
+	g->offset_x = g->window_wd / 2 - center_x;
+	g->offset_y = g->window_ht / 2 - center_y;
+
+	// Make sure the offset makes sense:
+	constrain_offset(&g->offset_x, g->window_wd, g->pixbuf_wd);
+	constrain_offset(&g->offset_y, g->window_ht, g->pixbuf_ht);
 }
 
 void
