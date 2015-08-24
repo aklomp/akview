@@ -6,6 +6,8 @@ LDFLAGS_GTK = `pkg-config --libs gtk+-3.0`
 CFLAGS  += $(CFLAGS_GTK)
 LDFLAGS += $(LDFLAGS_GTK)
 
+PREFIX ?= /usr/local
+
 OBJS = \
   src/filedata.o \
   src/filelist.o \
@@ -15,13 +17,17 @@ OBJS = \
   src/monitor.o \
   src/pixbuf.o
 
-.PHONY: clean
+.PHONY: clean install
 
 akview: $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $^
+
+install: akview
+	install -D -m 0755 akview $(DESTDIR)$(PREFIX)/bin/akview
+	install -D -m 0644 res/akview.desktop $(DESTDIR)$(PREFIX)/share/applications/akview.desktop
 
 clean:
 	rm -f $(OBJS) akview
