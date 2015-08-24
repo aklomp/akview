@@ -17,7 +17,7 @@ OBJS = \
   src/monitor.o \
   src/pixbuf.o
 
-.PHONY: clean install
+.PHONY: analyze clean install
 
 akview: $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
@@ -28,6 +28,9 @@ akview: $(OBJS)
 install: akview
 	install -D -m 0755 akview $(DESTDIR)$(PREFIX)/bin/akview
 	install -D -m 0644 res/akview.desktop $(DESTDIR)$(PREFIX)/share/applications/akview.desktop
+
+analyze: clean
+	scan-build --status-bugs make
 
 clean:
 	rm -f $(OBJS) akview
