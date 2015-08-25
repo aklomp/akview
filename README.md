@@ -26,6 +26,7 @@ A simple and fast image viewer inspired by Kuickshow.
 - -: zoom out.
 - 7: rotate counterclockwise.
 - 9: rotate clockwise.
+- o: zoom to natural size (1:1).
 
 The mouse scroll wheel also moves between images.
 

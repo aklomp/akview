@@ -84,11 +84,11 @@ processed_create (struct state *state)
 	if (fd->rotation != 0)
 		state->processed = gdk_pixbuf_rotate_simple(fd->pixbuf, fd->rotation);
 
+	// Recalculate layout:
+	geometry_zoom(&state->geometry, fd->zoom_factor);
+
 	// For non-unity zoom factors, resize pixbuf:
 	if (fd->zoom_factor != 1.0f) {
-
-		// Recalculate layout:
-		geometry_zoom(&state->geometry, fd->zoom_factor);
 
 		// If image is zoomed, create a new pixbuf:
 		GdkPixbuf *zoomed = gdk_pixbuf_scale_simple(
@@ -294,6 +294,19 @@ zoom_out (struct state *state)
 	processed_create(state);
 }
 
+// Zoom to natural size
+static void
+zoom_natural (struct state *state)
+{
+	struct filedata *fd = state->file->data;
+
+	// Set natural zoom factor:
+	fd->zoom_factor = 1.0f;
+
+	// Create processed image:
+	processed_create(state);
+}
+
 // Rotate counterclockwise
 static void
 rotate_ccw (struct state *state)
@@ -396,6 +409,11 @@ on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
 
 	case GDK_KEY_Delete:
 		delete(state);
+		break;
+
+	case GDK_KEY_o:
+	case GDK_KEY_O:
+		zoom_natural(state);
 		break;
 
 	default:
