@@ -416,6 +416,11 @@ on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
 		zoom_natural(state);
 		break;
 
+	case GDK_KEY_q:
+	case GDK_KEY_Q:
+		gtk_main_quit();
+		break;
+
 	default:
 		break;
 	}
