@@ -40,3 +40,9 @@ Run `sudo make install` to install the binary and the .desktop file to default l
 Run `sudo make install DESTDIR=/tmp/akview` to install to a custom directory for packaging.
 
 Run `sudo make install PREFIX=/usr` to use a custom install prefix. `PREFIX` and `DESTDIR` can be combined.
+
+## License
+
+This program is distributed under the terms of the
+[GNU General Public License version 3](https://www.gnu.org/licenses/gpl-3.0.html).
+See COPYING for the full license text.
