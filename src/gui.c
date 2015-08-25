@@ -16,6 +16,8 @@ struct state {
 	struct geometry geometry;
 	GdkPixbuf *processed;
 	gboolean panning;
+	gint screen_wd;
+	gint screen_ht;
 };
 
 // Zoom factors, powers of two in steps of 0.5:
@@ -101,6 +103,17 @@ processed_create (struct state *state)
 		// Put zoomed pixbuf in its place:
 		state->processed = zoomed;
 	}
+
+	// Bound the window dimensions to the screen dimensions:
+	if (state->geometry.window_wd > state->screen_wd)
+		geometry_window_resized(&state->geometry,
+			state->screen_wd,
+			state->geometry.window_ht);
+
+	if (state->geometry.window_ht > state->screen_ht)
+		geometry_window_resized(&state->geometry,
+			state->geometry.window_wd,
+			state->screen_ht);
 
 	// Resize main window to the new geometry:
 	gtk_window_resize(GTK_WINDOW(state->window),
@@ -523,6 +536,11 @@ gui_run (GList **list, GList *file, const gchar *dir)
 
 	// Show window:
 	gtk_widget_show_all(state.window);
+
+	// Get screen geometry:
+	GdkScreen *screen = gtk_window_get_screen(GTK_WINDOW(state.window));
+	state.screen_wd = gdk_screen_get_width(screen);
+	state.screen_ht = gdk_screen_get_height(screen);
 
 	// Load initial image:
 	gui_load(&state);
