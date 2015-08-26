@@ -30,6 +30,7 @@ A simple and fast image viewer inspired by Kuickshow.
 - q: quit program.
 
 The mouse scroll wheel also moves between images.
+Ctrl + mouse scroll zooms.
 
 ## Installation
 

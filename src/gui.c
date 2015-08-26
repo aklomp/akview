@@ -452,11 +452,15 @@ on_scroll (GtkWidget* widget, GdkEventScroll *event, struct state *state)
 	switch (event->direction)
 	{
 	case GDK_SCROLL_UP:
-		move_to_prev(state);
+		(event->state & GDK_CONTROL_MASK)
+			? zoom_in(state)
+			: move_to_prev(state);
 		break;
 
 	case GDK_SCROLL_DOWN:
-		move_to_next(state);
+		(event->state & GDK_CONTROL_MASK)
+			? zoom_out(state)
+			: move_to_next(state);
 		break;
 
 	default:
