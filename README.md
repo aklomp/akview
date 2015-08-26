@@ -15,6 +15,14 @@ A simple and fast image viewer inspired by Kuickshow.
 - Simple, clean C code;
 - Written for plain, modern Gtk+ 3.
 
+## Arguments
+
+If you run akview without arguments, it will display the first image in the current directory.
+If the first argument is a directory, akview will start on the first image in that directory.
+If the first argument is a full path or a filename, akview will start on that image.
+It's always possible to move between images in the same directory.
+Deletions, additions and modifications are monitored and processed in real time.
+
 ## Key bindings
 
 - Home: move to first image in list.
