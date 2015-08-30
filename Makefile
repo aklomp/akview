@@ -35,7 +35,7 @@ res/icon-%.o: res/icon-%.png
 	$(LD) --relocatable --format=binary -o $@ $^
 
 res/icon-%.png: res/icon.svg
-	inkscape --export-png=$@ --export-width=$* $^
+	rsvg-convert --format png --width $* --output $@ $^
 
 install: akview
 	install -D -m 0755 akview $(DESTDIR)$(PREFIX)/bin/akview
