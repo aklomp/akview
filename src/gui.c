@@ -22,6 +22,7 @@
 #include "filedata.h"
 #include "filelist.h"
 #include "geometry.h"
+#include "icons.h"
 #include "monitor.h"
 #include "pixbuf.h"
 
@@ -577,6 +578,9 @@ gui_run (GList **list, GList *file, const gchar *dir)
 
 	// Connect drawing area signals:
 	g_signal_connect(state.darea, "draw", G_CALLBACK(on_draw), &state);
+
+	// Load application icons:
+	icon_load();
 
 	// Show window:
 	gtk_widget_show_all(state.window);

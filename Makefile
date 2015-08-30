@@ -9,10 +9,16 @@ LDFLAGS += $(LDFLAGS_GTK)
 PREFIX ?= /usr/local
 
 OBJS = \
+  res/icon-16.o \
+  res/icon-32.o \
+  res/icon-48.o \
+  res/icon-64.o \
+  res/icon-128.o \
   src/filedata.o \
   src/filelist.o \
   src/geometry.o \
   src/gui.o \
+  src/icons.o \
   src/main.o \
   src/monitor.o \
   src/pixbuf.o
@@ -22,8 +28,14 @@ OBJS = \
 akview: $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-%.o: %.c
+src/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ -c $^
+
+res/icon-%.o: res/icon-%.png
+	$(LD) --relocatable --format=binary -o $@ $^
+
+res/icon-%.png: res/icon.svg
+	inkscape --export-png=$@ --export-width=$* $^
 
 install: akview
 	install -D -m 0755 akview $(DESTDIR)$(PREFIX)/bin/akview
