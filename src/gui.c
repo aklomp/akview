@@ -580,7 +580,7 @@ gui_run (GList **list, GList *file, const gchar *dir)
 	g_signal_connect(state.darea, "draw", G_CALLBACK(on_draw), &state);
 
 	// Load application icons:
-	icon_load();
+	icons_load();
 
 	// Show window:
 	gtk_widget_show_all(state.window);

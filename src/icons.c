@@ -57,7 +57,7 @@ list_add (GList *list, struct icon *icon)
 
 // Load all inline icons, use them as window icons:
 void
-icon_load (void)
+icons_load (void)
 {
 	ICON_DEF(16)
 	ICON_DEF(32);
