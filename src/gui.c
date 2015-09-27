@@ -108,12 +108,17 @@ processed_create (struct state *state)
 	// For non-unity zoom factors, resize pixbuf:
 	if (fd->zoom_factor != 1.0f) {
 
+		// Interpolation mode:
+		GdkInterpType mode = (fd->zoom_factor < 1.0f)
+			? GDK_INTERP_BILINEAR
+			: GDK_INTERP_NEAREST;
+
 		// If image is zoomed, create a new pixbuf:
 		GdkPixbuf *zoomed = gdk_pixbuf_scale_simple(
 			(state->processed) ? state->processed : fd->pixbuf,
 			state->geometry.pixbuf_wd,
 			state->geometry.pixbuf_ht,
-			GDK_INTERP_NEAREST);
+			mode);
 
 		// Reset the processed image:
 		processed_reset(state);
