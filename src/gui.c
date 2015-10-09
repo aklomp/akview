@@ -143,6 +143,15 @@ processed_create (struct state *state)
 		state->geometry.window_wd,
 		state->geometry.window_ht);
 
+	// Get feedback on the window's actual size.
+	// If the window is maximized, resizing it has no effect,
+	// and we would be assuming the wrong window size:
+	GtkAllocation allocation;
+	gtk_widget_get_allocation(state->window, &allocation);
+	geometry_window_resized(&state->geometry,
+		allocation.width,
+		allocation.height);
+
 	// Request a redraw:
 	gtk_widget_queue_draw(state->darea);
 }
