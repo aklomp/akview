@@ -15,24 +15,32 @@
 // You should have received a copy of the GNU General Public License
 // along with akview. If not, see <http://www.gnu.org/licenses/>.
 
-struct geometry {
-	int pixbuf_wd;
-	int pixbuf_ht;
-	int window_wd;
-	int window_ht;
-	int offset_x;
-	int offset_y;
-	int pan_start_x;
-	int pan_start_y;
-	int pixbuf_native_wd;
-	int pixbuf_native_ht;
+struct size {
+	int width;
+	int height;
+};
+
+struct position {
+	int x;
+	int y;
+};
+
+struct geometry
+{
+	struct {
+		struct size native;
+		struct size active;
+	} pixbuf;
+	struct size window;
+	struct position offset;
+	struct position pan_start;
 	gfloat zoom_factor;
 	int rotation;
 };
 
 void geometry_reset (struct geometry *g, GdkPixbuf *pixbuf);
-void geometry_window_resized (struct geometry *g, int new_wd, int new_ht);
-void geometry_pan_start (struct geometry *g, int x, int y);
-void geometry_pan_update (struct geometry *g, int x, int y);
+void geometry_window_resized (struct geometry *g, const struct size *size);
+void geometry_pan_start (struct geometry *g, const struct position *pos);
+void geometry_pan_update (struct geometry *g, const struct position *pos);
 void geometry_zoom (struct geometry *g, gfloat zoom_factor);
 void geometry_rotate (struct geometry *g, int rotation);

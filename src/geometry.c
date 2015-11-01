@@ -19,8 +19,8 @@
 
 #include "geometry.h"
 
-static void
-constrain_offset (int *offs, int winsz, int imgsz)
+static inline void
+constrain_offset_axis (int *offs, int winsz, int imgsz)
 {
 	// If window is larger than image, always center image:
 	if (winsz >= imgsz)
@@ -35,63 +35,65 @@ constrain_offset (int *offs, int winsz, int imgsz)
 			*offs = winsz - imgsz;
 	}
 }
-	
+
+static void
+constrain_offset (struct position *offs, const struct size *win, const struct size *img)
+{
+	constrain_offset_axis(&offs->x, win->width, img->width);
+	constrain_offset_axis(&offs->y, win->height, img->height);
+}
+
 void
 geometry_reset (struct geometry *g, GdkPixbuf *pixbuf)
 {
-	g->pixbuf_wd = gdk_pixbuf_get_width(pixbuf);
-	g->pixbuf_ht = gdk_pixbuf_get_height(pixbuf);
-	g->pixbuf_native_wd = g->pixbuf_wd;
-	g->pixbuf_native_ht = g->pixbuf_ht;
-	g->window_wd = g->pixbuf_wd;
-	g->window_ht = g->pixbuf_ht;
-	g->offset_x = 0;
-	g->offset_y = 0;
+	g->pixbuf.native.width = gdk_pixbuf_get_width(pixbuf);
+	g->pixbuf.native.height = gdk_pixbuf_get_height(pixbuf);
+	g->pixbuf.active = g->pixbuf.native;
+	g->window = g->pixbuf.active;
+	g->offset.x = 0;
+	g->offset.y = 0;
 	g->zoom_factor = 1.0f;
 	g->rotation = 0;
 }
 
 void
-geometry_window_resized (struct geometry *g, int new_wd, int new_ht)
+geometry_window_resized (struct geometry *g, const struct size *size)
 {
 	// Get image location currently in the window center:
-	int center_x = g->window_wd / 2 - g->offset_x;
-	int center_y = g->window_ht / 2 - g->offset_y;
+	int center_x = g->window.width / 2 - g->offset.x;
+	int center_y = g->window.height / 2 - g->offset.y;
 
 	// Store new window dimensions:
-	g->window_wd = new_wd;
-	g->window_ht = new_ht;
+	g->window = *size;
 
 	// Keep the old image center point:
-	g->offset_x = g->window_wd / 2 - center_x;
-	g->offset_y = g->window_ht / 2 - center_y;
+	g->offset.x = g->window.width / 2 - center_x;
+	g->offset.y = g->window.height / 2 - center_y;
 
 	// Make sure the offset makes sense:
-	constrain_offset(&g->offset_x, g->window_wd, g->pixbuf_wd);
-	constrain_offset(&g->offset_y, g->window_ht, g->pixbuf_ht);
+	constrain_offset(&g->offset, &g->window, &g->pixbuf.active);
 }
 
 void
-geometry_pan_start (struct geometry *g, int x, int y)
+geometry_pan_start (struct geometry *g, const struct position *pos)
 {
 	// Get coordinates relative to image offset:
-	g->pan_start_x = x - g->offset_x;
-	g->pan_start_y = y - g->offset_y;
+	g->pan_start.x = pos->x - g->offset.x;
+	g->pan_start.y = pos->y - g->offset.y;
 }
 
 void
-geometry_pan_update (struct geometry *g, int x, int y)
+geometry_pan_update (struct geometry *g, const struct position *pos)
 {
-	g->offset_x = x - g->pan_start_x;
-	g->offset_y = y - g->pan_start_y;
+	g->offset.x = pos->x - g->pan_start.x;
+	g->offset.y = pos->y - g->pan_start.y;
 
-	constrain_offset(&g->offset_x, g->window_wd, g->pixbuf_wd);
-	constrain_offset(&g->offset_y, g->window_ht, g->pixbuf_ht);
+	constrain_offset(&g->offset, &g->window, &g->pixbuf.active);
 
 	// Deduce start pos from constrained offset,
 	// in case we panned to the edge:
-	g->pan_start_x = x - g->offset_x;
-	g->pan_start_y = y - g->offset_y;
+	g->pan_start.x = pos->x - g->offset.x;
+	g->pan_start.y = pos->y - g->offset.y;
 }
 
 #define is_rotated \
@@ -100,17 +102,16 @@ geometry_pan_update (struct geometry *g, int x, int y)
 static void
 find_processed_size (struct geometry *g)
 {
-	g->pixbuf_wd = (is_rotated) ? g->pixbuf_native_ht : g->pixbuf_native_wd;
-	g->pixbuf_ht = (is_rotated) ? g->pixbuf_native_wd : g->pixbuf_native_ht;
+	g->pixbuf.active.width  = (is_rotated) ? g->pixbuf.native.height : g->pixbuf.native.width;
+	g->pixbuf.active.height = (is_rotated) ? g->pixbuf.native.width  : g->pixbuf.native.height;
 
-	g->pixbuf_wd *= g->zoom_factor;
-	g->pixbuf_ht *= g->zoom_factor;
+	g->pixbuf.active.width  *= g->zoom_factor;
+	g->pixbuf.active.height *= g->zoom_factor;
 
-	g->window_wd = g->pixbuf_wd;
-	g->window_ht = g->pixbuf_ht;
+	g->window = g->pixbuf.active;
 
-	g->offset_x = 0;
-	g->offset_y = 0;
+	g->offset.x = 0;
+	g->offset.y = 0;
 }
 
 void

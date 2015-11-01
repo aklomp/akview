@@ -34,8 +34,7 @@ struct state {
 	struct geometry geometry;
 	GdkPixbuf *processed;
 	gboolean panning;
-	gint screen_wd;
-	gint screen_ht;
+	struct size screen;
 };
 
 // Zoom factors, powers of two in steps of 0.5:
@@ -116,8 +115,8 @@ processed_create (struct state *state)
 		// If image is zoomed, create a new pixbuf:
 		GdkPixbuf *zoomed = gdk_pixbuf_scale_simple(
 			(state->processed) ? state->processed : fd->pixbuf,
-			state->geometry.pixbuf_wd,
-			state->geometry.pixbuf_ht,
+			state->geometry.pixbuf.active.width,
+			state->geometry.pixbuf.active.height,
 			mode);
 
 		// Reset the processed image:
@@ -128,29 +127,38 @@ processed_create (struct state *state)
 	}
 
 	// Bound the window dimensions to the screen dimensions:
-	if (state->geometry.window_wd > state->screen_wd)
-		geometry_window_resized(&state->geometry,
-			state->screen_wd,
-			state->geometry.window_ht);
+	if (state->geometry.window.width > state->screen.width) {
+		const struct size size = {
+			.width = state->screen.width,
+			.height = state->geometry.window.height,
+		};
+		geometry_window_resized(&state->geometry, &size);
+	}
 
-	if (state->geometry.window_ht > state->screen_ht)
-		geometry_window_resized(&state->geometry,
-			state->geometry.window_wd,
-			state->screen_ht);
+	if (state->geometry.window.height > state->screen.height) {
+		const struct size size = {
+			.width = state->geometry.window.width,
+			.height = state->screen.height,
+		};
+		geometry_window_resized(&state->geometry, &size);
+	}
 
 	// Resize main window to the new geometry:
 	gtk_window_resize(GTK_WINDOW(state->window),
-		state->geometry.window_wd,
-		state->geometry.window_ht);
+		state->geometry.window.width,
+		state->geometry.window.height);
 
 	// Get feedback on the window's actual size.
 	// If the window is maximized, resizing it has no effect,
 	// and we would be assuming the wrong window size:
 	GtkAllocation allocation;
 	gtk_widget_get_allocation(state->window, &allocation);
-	geometry_window_resized(&state->geometry,
-		allocation.width,
-		allocation.height);
+	geometry_window_resized(
+		&state->geometry,
+		&((struct size) {
+			.width = allocation.width,
+			.height = allocation.height
+		}));
 
 	// Request a redraw:
 	gtk_widget_queue_draw(state->darea);
@@ -498,8 +506,8 @@ on_draw (GtkWidget *widget, cairo_t *cr, struct state *state)
 	// Use original pixbuf or processed one if available:
 	gdk_cairo_set_source_pixbuf(cr,
 		(state->processed) ? state->processed : fd->pixbuf,
-		state->geometry.offset_x,
-		state->geometry.offset_y);
+		state->geometry.offset.x,
+		state->geometry.offset.y);
 
 	cairo_paint(cr);
 
@@ -510,7 +518,11 @@ on_draw (GtkWidget *widget, cairo_t *cr, struct state *state)
 static gboolean
 on_configure (GtkWidget *widget, GdkEventConfigure *event, struct state *state)
 {
-	geometry_window_resized(&state->geometry, event->width, event->height);
+	const struct size size = {
+		.width = event->width,
+		.height = event->height,
+	};
+	geometry_window_resized(&state->geometry, &size);
 	return FALSE;
 }
 
@@ -520,7 +532,11 @@ on_button_press (GtkWidget *widget, GdkEventButton *event, struct state *state)
 {
 	if (event->button == 1)
 		if (state->panning == FALSE) {
-			geometry_pan_start(&state->geometry, event->x, event->y);
+			const struct position position = {
+				.x = event->x,
+				.y = event->y,
+			};
+			geometry_pan_start(&state->geometry, &position);
 			state->panning = TRUE;
 			drag_cursor_set(state);
 		}
@@ -545,7 +561,11 @@ static gboolean
 on_motion_notify (GtkWidget *widget, GdkEventMotion *event, struct state *state)
 {
 	if (state->panning == TRUE) {
-		geometry_pan_update(&state->geometry, event->x, event->y);
+		const struct position position = {
+			.x = event->x,
+			.y = event->y,
+		};
+		geometry_pan_update(&state->geometry, &position);
 		gtk_widget_queue_draw(state->darea);
 	}
 
@@ -601,8 +621,8 @@ gui_run (GList **list, GList *file, const gchar *dir)
 
 	// Get screen geometry:
 	GdkScreen *screen = gtk_window_get_screen(GTK_WINDOW(state.window));
-	state.screen_wd = gdk_screen_get_width(screen);
-	state.screen_ht = gdk_screen_get_height(screen);
+	state.screen.width = gdk_screen_get_width(screen);
+	state.screen.height = gdk_screen_get_height(screen);
 
 	// Load initial image:
 	gui_load(&state);
