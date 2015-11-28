@@ -409,6 +409,52 @@ delete (struct state *state)
 	gtk_widget_destroy(dialog);
 }
 
+#define NUDGE_IMAGE	7
+
+struct nudge {
+	guint keyval;
+	int xfactor;
+	int yfactor;
+};
+
+// Find nudge structure for keyval
+static const struct nudge *
+nudge_find (const struct nudge *nudges, GdkEventKey *event)
+{
+	for (int i = 0; i < 4; i++)
+		if (nudges[i].keyval == event->keyval)
+			return &nudges[i];
+
+	return NULL;
+}
+
+// Slightly nudge image offset
+static void
+nudge_image (struct state *state, GdkEventKey *event)
+{
+	const struct nudge *nudge;
+	const static struct nudge nudges[] = {
+		{ GDK_KEY_Up,     0,  1 },
+		{ GDK_KEY_Down,   0, -1 },
+		{ GDK_KEY_Left,   1,  0 },
+		{ GDK_KEY_Right, -1,  0 },
+	};
+
+	if ((nudge = nudge_find(nudges, event)) == NULL)
+		return;
+
+	const int dx = nudge->xfactor * NUDGE_IMAGE;
+	const int dy = nudge->yfactor * NUDGE_IMAGE;
+
+	const struct position pos_a = { .x =  0, .y =  0 };
+	const struct position pos_b = { .x = dx, .y = dy };
+
+	geometry_pan_start (&state->geometry, &pos_a);
+	geometry_pan_update(&state->geometry, &pos_b);
+
+	gtk_widget_queue_draw(state->darea);
+}
+
 // Key was pressed
 static gboolean
 on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
@@ -429,6 +475,13 @@ on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
 
 	case GDK_KEY_End:
 		move_to_last(state);
+		break;
+
+	case GDK_KEY_Up:
+	case GDK_KEY_Down:
+	case GDK_KEY_Left:
+	case GDK_KEY_Right:
+		nudge_image(state, event);
 		break;
 
 	case GDK_KEY_plus:
