@@ -410,6 +410,7 @@ delete (struct state *state)
 }
 
 #define NUDGE_IMAGE	7
+#define NUDGE_WINDOW	5
 
 struct nudge {
 	guint keyval;
@@ -455,6 +456,29 @@ nudge_image (struct state *state, GdkEventKey *event)
 	gtk_widget_queue_draw(state->darea);
 }
 
+// Slightly nudge window dimensions
+static void
+nudge_window (struct state *state, GdkEventKey *event)
+{
+	const struct nudge *nudge;
+	const static struct nudge nudges[] = {
+		{ GDK_KEY_Up,     0, -1 },
+		{ GDK_KEY_Down,   0,  1 },
+		{ GDK_KEY_Left,  -1,  0 },
+		{ GDK_KEY_Right,  1,  0 },
+	};
+
+	if ((nudge = nudge_find(nudges, event)) == NULL)
+		return;
+
+	const int dx = nudge->xfactor * NUDGE_WINDOW;
+	const int dy = nudge->yfactor * NUDGE_WINDOW;
+
+	gtk_window_resize(GTK_WINDOW(state->window),
+		state->geometry.window.width + dx,
+		state->geometry.window.height + dy);
+}
+
 // Key was pressed
 static gboolean
 on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
@@ -481,7 +505,9 @@ on_key_press (GtkWidget *widget, GdkEventKey *event, struct state *state)
 	case GDK_KEY_Down:
 	case GDK_KEY_Left:
 	case GDK_KEY_Right:
-		nudge_image(state, event);
+		(event->state & GDK_CONTROL_MASK)
+			? nudge_window(state, event)
+			: nudge_image(state, event);
 		break;
 
 	case GDK_KEY_plus:
