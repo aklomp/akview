@@ -1,7 +1,7 @@
 CFLAGS += -std=c99 -Werror -Wall -pedantic
 
-CFLAGS_GTK  = `pkg-config --cflags gtk+-3.0`
-LDFLAGS_GTK = `pkg-config --libs gtk+-3.0`
+CFLAGS_GTK  := $(shell pkg-config --cflags gtk+-3.0)
+LDFLAGS_GTK := $(shell pkg-config --libs   gtk+-3.0)
 
 CFLAGS  += $(CFLAGS_GTK)
 LDFLAGS += $(LDFLAGS_GTK)
