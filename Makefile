@@ -14,14 +14,7 @@ OBJS = \
   res/icon-48.o \
   res/icon-64.o \
   res/icon-128.o \
-  src/filedata.o \
-  src/filelist.o \
-  src/geometry.o \
-  src/gui.o \
-  src/icons.o \
-  src/main.o \
-  src/monitor.o \
-  src/pixbuf.o
+  $(patsubst %.c,%.o,$(wildcard src/*.c))
 
 .PHONY: analyze clean install
 
