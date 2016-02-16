@@ -27,14 +27,14 @@
 #include "pixbuf.h"
 
 struct state {
-	GList **list;
-	GList *file;
-	GtkWidget *window;
-	GtkWidget *darea;
-	struct geometry geometry;
-	GdkPixbuf *processed;
-	gboolean panning;
-	struct size screen;
+	GList		**list;
+	GList		 *file;
+	GtkWidget	 *window;
+	GtkWidget	 *darea;
+	GdkPixbuf	 *processed;
+	struct size	  screen;
+	struct geometry	  geometry;
+	gboolean	  panning;
 };
 
 // Zoom factors, powers of two in steps of 0.5:
@@ -60,9 +60,9 @@ static size_t zoom_table_size = sizeof(zoom_table) / sizeof(zoom_table[0]);
 static void
 drag_cursor_set (struct state *state)
 {
-	GdkWindow *window = gtk_widget_get_window(state->window);
+	GdkWindow  *window  = gtk_widget_get_window(state->window);
 	GdkDisplay *display = gdk_window_get_display(window);
-	GdkCursor *cursor = gdk_cursor_new_for_display(display, GDK_HAND2);
+	GdkCursor  *cursor  = gdk_cursor_new_for_display(display, GDK_HAND2);
 
 	gdk_window_set_cursor(window, cursor);
 	g_object_unref(cursor);
@@ -129,7 +129,7 @@ processed_create (struct state *state)
 	// Bound the window dimensions to the screen dimensions:
 	if (state->geometry.window.width > state->screen.width) {
 		const struct size size = {
-			.width = state->screen.width,
+			.width  = state->screen.width,
 			.height = state->geometry.window.height,
 		};
 		geometry_window_resized(&state->geometry, &size);
@@ -137,7 +137,7 @@ processed_create (struct state *state)
 
 	if (state->geometry.window.height > state->screen.height) {
 		const struct size size = {
-			.width = state->geometry.window.width,
+			.width  = state->geometry.window.width,
 			.height = state->screen.height,
 		};
 		geometry_window_resized(&state->geometry, &size);
@@ -156,7 +156,7 @@ processed_create (struct state *state)
 	geometry_window_resized(
 		&state->geometry,
 		&((struct size) {
-			.width = allocation.width,
+			.width  = allocation.width,
 			.height = allocation.height
 		}));
 
@@ -598,7 +598,7 @@ static gboolean
 on_configure (GtkWidget *widget, GdkEventConfigure *event, struct state *state)
 {
 	const struct size size = {
-		.width = event->width,
+		.width  = event->width,
 		.height = event->height,
 	};
 	geometry_window_resized(&state->geometry, &size);
@@ -656,9 +656,9 @@ void
 gui_run (GList **list, GList *file, const gchar *dir)
 {
 	struct {
-		const gchar *signal;
-		GCallback handler;
-		GdkEventMask mask;
+		const gchar	*signal;
+		GCallback	 handler;
+		GdkEventMask	 mask;
 	}
 	signals[] = {
 		{ "destroy",			G_CALLBACK(gtk_main_quit),	0			},
@@ -699,8 +699,8 @@ gui_run (GList **list, GList *file, const gchar *dir)
 	gtk_widget_show_all(state.window);
 
 	// Get screen geometry:
-	GdkScreen *screen = gtk_window_get_screen(GTK_WINDOW(state.window));
-	state.screen.width = gdk_screen_get_width(screen);
+	GdkScreen *screen   = gtk_window_get_screen(GTK_WINDOW(state.window));
+	state.screen.width  = gdk_screen_get_width(screen);
 	state.screen.height = gdk_screen_get_height(screen);
 
 	// Load initial image:
