@@ -55,23 +55,29 @@ list_add (GList *list, struct icon *icon)
 	return list;
 }
 
+// The "X macro" trick to map an operation to a list of variables:
+#define X_MAP	\
+	X(16)	\
+	X(32)	\
+	X(48)	\
+	X(64)	\
+	X(128)	\
+
 // Load all inline icons, use them as window icons:
 void
 icons_load (void)
 {
-	ICON_DEF(16)
-	ICON_DEF(32);
-	ICON_DEF(48);
-	ICON_DEF(64);
-	ICON_DEF(128);
+	// Define pointers:
+	#define X(x) ICON_DEF(x);
+	X_MAP
+	#undef X
 
+	// Define array of structs:
+	#define X(x) ICON(x),
 	struct icon icons[] = {
-		ICON(16),
-		ICON(32),
-		ICON(48),
-		ICON(64),
-		ICON(128),
+		X_MAP
 	};
+	#undef X
 
 	GList *list = NULL;
 
