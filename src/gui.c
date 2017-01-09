@@ -26,6 +26,8 @@
 #include "monitor.h"
 #include "pixbuf.h"
 
+#define NELEM(x)	(sizeof(x) / sizeof((x)[0]))
+
 struct state {
 	GList		**list;
 	GList		 *file;
@@ -54,7 +56,7 @@ static const gfloat zoom_table[] = {
 	8.000000f,
 };
 
-static size_t zoom_table_size = sizeof(zoom_table) / sizeof(zoom_table[0]);
+static size_t zoom_table_size = NELEM(zoom_table);
 
 // Set drag cursor
 static void
@@ -651,25 +653,43 @@ on_motion_notify (GtkWidget *widget, GdkEventMotion *event, struct state *state)
 	return FALSE;
 }
 
+struct signal {
+	const gchar	*signal;
+	GCallback	 handler;
+	GdkEventMask	 mask;
+};
+
+static const struct signal
+signals_window[] = {
+	{ "destroy",              G_CALLBACK(gtk_main_quit),     0                       },
+	{ "key-press-event",      G_CALLBACK(on_key_press),      GDK_KEY_PRESS_MASK      },
+	{ "scroll-event",         G_CALLBACK(on_scroll),         GDK_SCROLL_MASK         },
+	{ "configure-event",      G_CALLBACK(on_configure),      0                       },
+	{ "button-press-event",   G_CALLBACK(on_button_press),   GDK_BUTTON_PRESS_MASK   },
+	{ "button-release-event", G_CALLBACK(on_button_release), GDK_BUTTON_RELEASE_MASK },
+	{ "motion-notify-event",  G_CALLBACK(on_motion_notify),  GDK_BUTTON1_MOTION_MASK },
+	{  NULL }
+};
+
+static const struct signal
+signals_darea[] = {
+	{ "draw", G_CALLBACK(on_draw), 0 },
+	{  NULL }
+};
+
+static void
+signals_connect (struct state *state, GtkWidget *widget, const struct signal *signals)
+{
+	for (const struct signal *s = signals; s->signal; s++) {
+		gtk_widget_add_events(widget, s->mask);
+		g_signal_connect(widget, s->signal, s->handler, state);
+	}
+}
+
 // GUI entry point
 void
 gui_run (GList **list, GList *file, const gchar *dir)
 {
-	struct {
-		const gchar	*signal;
-		GCallback	 handler;
-		GdkEventMask	 mask;
-	}
-	signals[] = {
-		{ "destroy",			G_CALLBACK(gtk_main_quit),	0			},
-		{ "key-press-event",		G_CALLBACK(on_key_press),	GDK_KEY_PRESS_MASK	},
-		{ "scroll-event",		G_CALLBACK(on_scroll),		GDK_SCROLL_MASK		},
-		{ "configure-event",		G_CALLBACK(on_configure),	0			},
-		{ "button-press-event",		G_CALLBACK(on_button_press),	GDK_BUTTON_PRESS_MASK	},
-		{ "button-release-event",	G_CALLBACK(on_button_release),	GDK_BUTTON_RELEASE_MASK	},
-		{ "motion-notify-event",	G_CALLBACK(on_motion_notify),	GDK_BUTTON1_MOTION_MASK	},
-	};
-
 	struct state state = { list, file };
 
 	// Create new window:
@@ -679,18 +699,9 @@ gui_run (GList **list, GList *file, const gchar *dir)
 	state.darea = gtk_drawing_area_new();
 	gtk_container_add(GTK_CONTAINER(state.window), state.darea);
 
-	// Connect window signals:
-	for (size_t i = 0; i < sizeof(signals) / sizeof(signals[0]); i++) {
-		gtk_widget_add_events(state.window, signals[i].mask);
-		g_signal_connect(
-			state.window,
-			signals[i].signal,
-			signals[i].handler,
-			&state);
-	}
-
-	// Connect drawing area signals:
-	g_signal_connect(state.darea, "draw", G_CALLBACK(on_draw), &state);
+	// Connect window and drawing area signals:
+	signals_connect(&state, state.window, signals_window);
+	signals_connect(&state, state.darea,  signals_darea );
 
 	// Load application icons:
 	icons_load();
