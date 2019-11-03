@@ -709,10 +709,24 @@ gui_run (GList **list, GList *file, const gchar *dir)
 	// Show window:
 	gtk_widget_show_all(state.window);
 
-	// Get screen geometry:
+	// Get screen geometry. GTK+ 3.22 and above introduced per-monitor
+	// geometry, which necessitates a more involved algorithm:
+#if GTK_MAJOR_VERSION > 3 || GTK_MINOR_VERSION >= 22
+	GdkRectangle rect;
+
+	GdkScreen  *screen    = gtk_window_get_screen(GTK_WINDOW(state.window));
+	GdkDisplay *display   = gdk_screen_get_display(screen);
+	GdkMonitor *monitor   = gdk_display_get_monitor_at_window(display, gtk_widget_get_window(state.window));
+	const int scalefactor = gdk_monitor_get_scale_factor(monitor);
+	gdk_monitor_get_geometry(monitor, &rect);
+	state.screen.width    = rect.width  * scalefactor;
+	state.screen.height   = rect.height * scalefactor;
+#else
+	// Previous GTK versions can get by with simpler logic:
 	GdkScreen *screen   = gtk_window_get_screen(GTK_WINDOW(state.window));
 	state.screen.width  = gdk_screen_get_width(screen);
 	state.screen.height = gdk_screen_get_height(screen);
+#endif
 
 	// Load initial image:
 	gui_load(&state);
