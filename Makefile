@@ -1,13 +1,14 @@
 CFLAGS += -std=c99 -Werror -Wall -pedantic
 
-CFLAGS_GTK  := $(shell pkg-config --cflags gtk+-3.0)
-LDFLAGS_GTK := $(shell pkg-config --libs   gtk+-3.0)
+CFLAGS_GTK := $(shell pkg-config --cflags gtk+-3.0)
+LIBS_GTK   := $(shell pkg-config --libs   gtk+-3.0)
 
-CFLAGS  += $(CFLAGS_GTK)
-LDFLAGS += $(LDFLAGS_GTK)
+CFLAGS += $(CFLAGS_GTK)
+LIBS   += $(LIBS_GTK)
 
 PREFIX ?= /usr/local
 
+BIN  = akview
 OBJS = \
   res/icon-16.o \
   res/icon-32.o \
@@ -18,8 +19,8 @@ OBJS = \
 
 .PHONY: analyze clean install
 
-akview: $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+$(BIN): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 src/%.o: src/%.c
 	$(CC) $(CFLAGS) -o $@ -c $^
@@ -30,12 +31,12 @@ res/icon-%.o: res/icon-%.png
 res/icon-%.png: res/icon.svg
 	rsvg-convert --format png --width $* --output $@ $^
 
-install: akview
-	install -D -m 0755 akview $(DESTDIR)$(PREFIX)/bin/akview
+install: $(BIN)
+	install -D -m 0755 $(BIN) $(DESTDIR)$(PREFIX)/bin/$(BIN)
 	install -D -m 0644 res/akview.desktop $(DESTDIR)$(PREFIX)/share/applications/akview.desktop
 
 analyze: clean
-	scan-build --status-bugs make
+	scan-build --status-bugs $(MAKE)
 
 clean:
-	rm -f $(OBJS) akview
+	$(RM) $(OBJS) $(BIN)
