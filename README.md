@@ -2,6 +2,8 @@
 
 A simple and fast image viewer inspired by Kuickshow.
 
+[![Build Status](https://travis-ci.org/aklomp/akview.svg?branch=master)](https://travis-ci.org/aklomp/akview)
+
 ## Features
 
 - Easy to use, copies Kuickshow's main key and mouse bindings;
