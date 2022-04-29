@@ -1,5 +1,7 @@
 # akview
 
+[![Build](https://github.com/aklomp/akview/actions/workflows/build.yml/badge.svg)](https://github.com/aklomp/akview/actions/workflows/build.yml)
+
 A simple and fast image viewer inspired by Kuickshow.
 
 ## Features
