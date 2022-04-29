@@ -1,8 +1,8 @@
 # akview
 
-A simple and fast image viewer inspired by Kuickshow.
+[![Build](https://github.com/aklomp/akview/actions/workflows/build.yml/badge.svg)](https://github.com/aklomp/akview/actions/workflows/build.yml)
 
-[![Build Status](https://travis-ci.org/aklomp/akview.svg?branch=master)](https://travis-ci.org/aklomp/akview)
+A simple and fast image viewer inspired by Kuickshow.
 
 ## Features
 
