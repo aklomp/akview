@@ -1,4 +1,4 @@
-// Copyright 2015, Alfred Klomp <git@alfredklomp.com>
+// Copyright 2015-2022, Alfred Klomp <git@alfredklomp.com>
 //
 // This file is part of akview.
 //
@@ -15,7 +15,6 @@
 // You should have received a copy of the GNU General Public License
 // along with akview. If not, see <http://www.gnu.org/licenses/>.
 
-#include <glib.h>
 #include <gdk/gdk.h>
 
 #include "filedata.h"
