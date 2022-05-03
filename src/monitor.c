@@ -1,4 +1,4 @@
-// Copyright 2015, Alfred Klomp <git@alfredklomp.com>
+// Copyright 2015-2022, Alfred Klomp <git@alfredklomp.com>
 //
 // This file is part of akview.
 //
@@ -32,22 +32,20 @@ static GFileMonitor *monitor = NULL;
 static void
 on_changed (GFileMonitor *monitor, GFile *file, GFile *other, GFileMonitorEvent type, struct state *state)
 {
-	switch (type) {
-	case G_FILE_MONITOR_EVENT_CHANGED: {
-		GList *link;
-		gchar *path = g_file_get_path(file);
+	GList *link;
+	gchar *path;
 
+	switch (type) {
+	case G_FILE_MONITOR_EVENT_CHANGED:
+		path = g_file_get_path(file);
 		if ((link = filelist_find(*state->list, path)) != NULL)
 			gui_notify_changed(link, state->data);
 
 		g_free(path);
 		break;
-	}
 
-	case G_FILE_MONITOR_EVENT_DELETED: {
-		GList *link;
-		gchar *path = g_file_get_path(file);
-
+	case G_FILE_MONITOR_EVENT_DELETED:
+		path = g_file_get_path(file);
 		if ((link = filelist_find(*state->list, path)) != NULL) {
 			gui_notify_deleted(link, state->data);
 			filelist_unlink(state->list, link);
@@ -55,7 +53,6 @@ on_changed (GFileMonitor *monitor, GFile *file, GFile *other, GFileMonitorEvent 
 
 		g_free(path);
 		break;
-	}
 
 	case G_FILE_MONITOR_EVENT_CREATED:
 		filelist_link(state->list, g_file_get_path(file));
