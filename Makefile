@@ -1,29 +1,24 @@
+BIN  := akview
+
 CFLAGS += -std=c99 -Werror -Wall -pedantic
-
-CFLAGS_GTK := $(shell pkg-config --cflags gtk+-3.0)
-LIBS_GTK   := $(shell pkg-config --libs   gtk+-3.0)
-
-CFLAGS += $(CFLAGS_GTK)
-LIBS   += $(LIBS_GTK)
+CFLAGS += $(shell pkg-config --cflags gtk+-3.0)
+LIBS   += $(shell pkg-config --libs   gtk+-3.0)
 
 PREFIX ?= /usr/local
 
-BIN  = akview
-OBJS = \
+SRCS := $(wildcard src/*.c)
+OBJS := $(SRCS:.c=.o)
+OBJS += \
   res/icon-16.o \
   res/icon-32.o \
   res/icon-48.o \
   res/icon-64.o \
-  res/icon-128.o \
-  $(patsubst %.c,%.o,$(wildcard src/*.c))
+  res/icon-128.o
 
 .PHONY: analyze clean install
 
 $(BIN): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-src/%.o: src/%.c
-	$(CC) $(CFLAGS) -o $@ -c $^
 
 res/icon-%.o: res/icon-%.png
 	$(LD) --relocatable --format=binary -o $@ $^
