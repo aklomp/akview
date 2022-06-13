@@ -25,8 +25,7 @@
 #include "icons.h"
 #include "monitor.h"
 #include "pixbuf.h"
-
-#define NELEM(x)	(sizeof(x) / sizeof((x)[0]))
+#include "util.h"
 
 struct state {
 	GList		**list;

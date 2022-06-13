@@ -17,6 +17,8 @@
 
 #include <gtk/gtk.h>
 
+#include "util.h"
+
 struct icon {
 	char *start;
 	size_t size;
@@ -82,8 +84,8 @@ icons_load (void)
 	GList *list = NULL;
 
 	// Add icons to list:
-	for (size_t i = 0; i < sizeof(icons) / sizeof(icons[0]); i++)
-		list = list_add(list, &icons[i]);
+	FOREACH (icons, i)
+		list = list_add(list, i);
 
 	// Set icon list as default:
 	gtk_window_set_default_icon_list(list);
