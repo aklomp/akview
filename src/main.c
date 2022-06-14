@@ -51,7 +51,7 @@ get_initial_dir (int argc, char *argv[])
 
 // Return pointer to initial file in list to show
 static GList *
-get_initial_file (int argc, char *argv[], gchar *dir, GList *list)
+get_initial_file (int argc, char *argv[], GList *list)
 {
 	// At least one argument:
 	if (argc > 1) {
@@ -88,7 +88,7 @@ main (int argc, char *argv[])
 	}
 
 	// Get the initial file within the dir:
-	if (!(file = get_initial_file(argc, argv, dir, list))) {
+	if (!(file = get_initial_file(argc, argv, list))) {
 		ret = 1;
 		goto out1;
 	}
